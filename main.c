@@ -2,23 +2,30 @@
 #include <stdlib.h> 
 #include <time.h>
 #include <math.h>
+#include <stdio.h>
+#include "image.h"
+
 
 #define PI 3.1415926535
 #define EPSILON 0.01
 #define TIMER_ID 0
-#define TIMER_INTERVAL 50
+#define TIMER_INTERVAL 25
+#define FILENAME1 "AirHockeySurface.bmp"
 
 
 const static float size = 0.2;
 
-static int window_height, window_width;
+static GLuint names[2];
+static float matrix[16];
+
 /*tekuce koordinate lopte*/
 static float x_curr, z_curr;
 /*vektor brzine*/
 static float v_x, v_z;   
-static float first_x,first_z= 0;
-static float second_x,second_z= 0;
-
+static float first_x = -4,first_z= 0;
+static float second_x = 4,second_z= 0;
+static int count_fsd = 0, count_scd = 0;
+static void init_image();
 
 static int animation_ongoing;
 
@@ -31,6 +38,7 @@ void draw_object();
 void draw_ball();
 void draw_ground();
 void light();
+void collision();
 
 int main(int argc, char **argv){
     
@@ -39,7 +47,7 @@ int main(int argc, char **argv){
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
     
     /*kreiramo prozor*/
-    glutInitWindowSize(800,600);
+    glutInitWindowSize(900, 580);
     glutInitWindowPosition(100,100);
     glutCreateWindow(argv[0]);
     
@@ -58,8 +66,8 @@ int main(int argc, char **argv){
 
     
     /*inicijalizacija koordinata*/
-    x_curr = -(1 - size / 2) + (2 - size) * rand() / (float) RAND_MAX;
-    z_curr = -(1 - size / 2) + (2 - size) * rand() / (float) RAND_MAX;
+    x_curr = 0;
+    z_curr = 0;
 
     /*inicjalizacija vektora*/
     v_x = -size / 2 + size * rand() / (float) RAND_MAX;
@@ -69,6 +77,8 @@ int main(int argc, char **argv){
 
     /*openGl inicjalizacija*/
     glClearColor(0,0,0,0);
+    
+    init_image();
     
     /*poziv glavne petlje*/
     glutMainLoop();
@@ -143,7 +153,7 @@ static void on_display(void){
         glTranslatef(0,0,first_z);
         GLfloat diffuse_coeffs_red[] = { 1, 0.1, 0.1, 1 };
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_coeffs_red);
-        glTranslatef(4,0.1,0);
+        glTranslatef(first_x,0.1,0);
         draw_object();
     glPopMatrix();
     
@@ -152,7 +162,7 @@ static void on_display(void){
         glTranslatef(0,0,second_z);
         GLfloat diffuse_coeffs_blue[] = { 0.1, 0.1, 1, 1 };
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_coeffs_blue);
-        glTranslatef(-4,0.1,0);
+        glTranslatef(second_x,0.1,0);
         draw_object();
     glPopMatrix();
     
@@ -205,29 +215,26 @@ static void on_keyboard(unsigned char key, int x, int y){
             second_z = 0;
             glutPostRedisplay();
             break;
-
         case 'o':
         case 'O':
-            if(second_z <= 3.8)
-                second_z += 0.3;
-            break;
-        case 'k':
-        case 'K':
-            if(second_z >= -3.8)
-                second_z -= 0.3;
-            break;
-            
-        case 'w':
-        case 'W':
             if(first_z <= 3.8)
                 first_z += 0.3;
             break;
-        case 'a':
-        case 'A':
+        case 'k':
+        case 'K':
             if(first_z >= -3.8)
                 first_z -= 0.3;
             break;
-
+        case 'w':
+        case 'W':
+            if(second_z <= 3.8)
+                second_z += 0.3;
+            break;
+        case 'a':
+        case 'A':
+            if(second_z >= -3.8)
+                second_z -= 0.3;
+        break;
 
     }
     
@@ -242,7 +249,9 @@ static void on_reshape(int width, int height){
     gluPerspective(60, (float) width / height, 1, 3000);
 }
 
-
+void collision(){
+    
+}
 
 
 /*iscrtavanje plocice */
@@ -256,6 +265,23 @@ void draw_object(){
 /*crtanje terena*/
 void draw_ground(){
     glPushMatrix();
+//         glBindTexture(GL_TEXTURE_2D, names[0]);
+//         glBegin(GL_QUADS);
+//             glNormal3f(0, 0, 1);
+// 
+//             glTexCoord2f(0, 0);
+//             glVertex3f(-990, -580, 0);
+// 
+//             glTexCoord2f(0,1);
+//             glVertex3f(-990, 580, 0);
+// 
+//             glTexCoord2f(1, 1);
+//             glVertex3f(900, 580, 0);
+// 
+//             glTexCoord2f(1, 0);
+//             glVertex3f(900, -580, 0);
+//         glEnd();
+//         glBindTexture(GL_TEXTURE_2D, 0);
         glScalef(10,0.1,10);
         glutSolidCube(1);
     glPopMatrix();
@@ -273,15 +299,51 @@ static void on_timer(int value){
         return;
     
     x_curr += v_x*2;
-    if(x_curr <= -(5 - size / 2) || x_curr >= (5 - size / 2)){
+    if(x_curr  <= -(5 - size / 2)){
+        v_x *= -1;
+        count_scd++;
+        animation_ongoing = 0;
+        x_curr = 0;
+        z_curr = 0;
+        first_x = -4;
+        first_z = 0;
+        second_x = 4;
+        second_z = 0;
+    }
+    if(x_curr  >= (5 - size / 2)){
+        v_x *= -1;
+        count_fsd++;
+        animation_ongoing = 0;
+        x_curr = 0;
+        z_curr = 0;
+        first_x = -4;
+        first_z = 0;
+        second_x = 4;
+        second_z = 0;
+        
+    }
+    
+    if(x_curr <= -3.55 && z_curr >= first_z - 1 &&  z_curr <= first_z + 1){
         v_x *= -1;
     }
+    
+    if(x_curr >= 3.55 && z_curr >= second_z - 1 &&  z_curr <= second_z + 1){
+        v_x *= -1;
+    }
+    
+    
+    printf("%d %d\n", count_fsd, count_scd);
+    
     z_curr += v_z*2;
     if(z_curr <= -(5 - size / 2) || z_curr >= (5 - size / 2)){
         v_z *= -1;
     }
     
     
+    
+    
+    /*fsd crveni*/
+        
     /*ponovno iscrtavanje prozora*/
     glutPostRedisplay();
     
@@ -290,6 +352,62 @@ static void on_timer(int value){
     }
     
 }
+
+
+static void init_image(void)
+{
+    /* Objekat koji predstavlja teskturu ucitanu iz fajla. */
+    Image * image;
+
+    /* Postavlja se boja pozadine. */
+
+    /* Ukljucuje se testiranje z-koordinate piksela. */
+    glEnable(GL_DEPTH_TEST);
+
+    /* Ukljucuju se teksture. */
+    glEnable(GL_TEXTURE_2D);
+
+    glTexEnvf(GL_TEXTURE_ENV,
+              GL_TEXTURE_ENV_MODE,
+              GL_REPLACE);
+
+    /*
+     * Inicijalizuje se objekat koji ce sadrzati teksture ucitane iz
+     * fajla.
+     */
+    image = image_init(900, 580);
+
+
+    /* Generisu se identifikatori tekstura. */
+    glGenTextures(2, names);
+
+
+    /* Kreira se druga tekstura. */
+    image_read(image, FILENAME1);
+
+    glBindTexture(GL_TEXTURE_2D, names[1]);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                 image->width, image->height, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
+
+    /* Iskljucujemo aktivnu teksturu */
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    /* Unistava se objekat za citanje tekstura iz fajla. */
+    image_done(image);
+
+    /* Inicijalizujemo matricu rotacije. */
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+}
+
 
 
 

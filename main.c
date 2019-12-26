@@ -4,7 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "image.h"
-
+#include <string.h>
 
 #define PI 3.1415926535
 #define EPSILON 0.01
@@ -18,6 +18,7 @@ const static float size = 0.2;
 static GLuint names[2];
 static float matrix[16];
 
+const float deg_to_rad = 3.14159/180;
 /*tekuce koordinate lopte*/
 static float x_curr, z_curr;
 /*vektor brzine*/
@@ -26,10 +27,12 @@ static float first_x = -4,first_z= 0;
 static float second_x = 4,second_z= 0;
 static int count_fsd = 0, count_scd = 0;
 static void init_image();
-
 static int animation_ongoing;
-
+static int animation_parametar = 0;
 /*fj-e*/
+void function_result_blue();
+void function_result_red();
+static void displayText( float x, float y, int r, int g, int b, const char *string );
 static void on_display(void);
 static void on_timer(int value);
 static void on_keyboard(unsigned char key, int x, int y);
@@ -38,7 +41,6 @@ void draw_object();
 void draw_ball();
 void draw_ground();
 void light();
-void collision();
 
 int main(int argc, char **argv){
     
@@ -70,11 +72,15 @@ int main(int argc, char **argv){
     z_curr = 0;
 
     /*inicjalizacija vektora*/
-    v_x = -size / 2 + size * rand() / (float) RAND_MAX;
-    v_z = -size / 2 + size * rand() / (float) RAND_MAX;
+    v_x = -size / 2 + size * 0.25;
+    v_z = -size / 2 + size * 0.25;
     
     animation_ongoing = 0;
-
+    
+    /*debljina linije*/
+    glEnable(GL_LINE_SMOOTH);
+    glLineWidth(1);
+    
     /*openGl inicjalizacija*/
     glClearColor(0,0,0,0);
     
@@ -127,6 +133,7 @@ static void on_display(void){
              );
     
     
+    glRotatef(animation_parametar,0,1,0);
     
     /* Koeficijenti ambijentalne refleksije materijala. */
     GLfloat ambient_coeffs[] = { 0.3, 0.3, 0.3, 1 };
@@ -183,7 +190,10 @@ static void on_display(void){
         draw_ball();
     glPopMatrix();
     
-    
+    /*iscrtavanje rezultata*/
+    function_result_red();
+    function_result_blue();
+
     
     /*Novu sliku saljemo na ekran*/
     glutSwapBuffers();
@@ -209,6 +219,8 @@ static void on_keyboard(unsigned char key, int x, int y){
             break;
         case 'r':
         case 'R':
+            count_fsd = 0;
+            count_scd = 0;
             x_curr = 0;
             z_curr = 0;
             first_z = 0;
@@ -235,7 +247,16 @@ static void on_keyboard(unsigned char key, int x, int y){
             if(second_z >= -3.8)
                 second_z -= 0.3;
         break;
-
+        case 'v':
+        case 'V':
+            animation_parametar += 10;
+            glutPostRedisplay();
+        break;
+        case 'b':
+        case 'B':
+            animation_parametar -= 10;
+            glutPostRedisplay();
+        break;
     }
     
 }
@@ -249,10 +270,6 @@ static void on_reshape(int width, int height){
     gluPerspective(60, (float) width / height, 1, 3000);
 }
 
-void collision(){
-    
-}
-
 
 /*iscrtavanje plocice */
 void draw_object(){
@@ -262,28 +279,120 @@ void draw_object(){
     glPopMatrix();
 }
 
+void function_result_blue(){
+    if(count_scd >= 1){
+        glPushMatrix();
+            GLfloat diffuse_coeffs_blue[] = { 0.1, 0.1, 1, 1 };
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_coeffs_blue);
+            glTranslatef(5,5,2);   
+            draw_ball();
+        glPopMatrix();
+    }
+    if(count_scd >= 2){
+        glPushMatrix();
+            GLfloat diffuse_coeffs_blue[] = { 0.1, 0.1, 1, 1 };
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_coeffs_blue);
+            glTranslatef(6,5,2);   
+            draw_ball();
+        glPopMatrix();
+        
+    }
+    if(count_scd == 3){
+        displayText(2,5,0,0,1,"Plavi je pobednik!");
+        glPushMatrix();
+            GLfloat diffuse_coeffs_blue[] = { 0.1, 0.1, 1, 1 };
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_coeffs_blue);
+            glTranslatef(7,5,2);   
+            draw_ball();
+        glPopMatrix();
+        
+    }
+    
+}
+
+
+
+void function_result_red(){
+    if(count_fsd >= 1){
+        glPushMatrix();
+                    GLfloat diffuse_coeffs_red[] = { 1, 0.1, 0.1, 1 };
+
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_coeffs_red);
+            glTranslatef(-5,5,2);   
+            draw_ball();
+        glPopMatrix();
+    }
+    if(count_fsd >= 2){
+        glPushMatrix();
+            GLfloat diffuse_coeffs_red[] = { 1, 0.1, 0.1, 1 };
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_coeffs_red);
+            glTranslatef(-6,5,2);   
+            draw_ball();
+        glPopMatrix();
+        
+    }
+    if(count_fsd == 3){
+        displayText(2,5,1,0,0,"Crveni je pobednik!");
+        glPushMatrix();
+            GLfloat diffuse_coeffs_red[] = { 1, 0.1, 0.1, 1 };
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_coeffs_red);
+            glTranslatef(-7,5,2);   
+            draw_ball();
+        glPopMatrix();
+    }
+    
+}
+
+
+
+
 /*crtanje terena*/
 void draw_ground(){
     glPushMatrix();
-//         glBindTexture(GL_TEXTURE_2D, names[0]);
-//         glBegin(GL_QUADS);
-//             glNormal3f(0, 0, 1);
-// 
-//             glTexCoord2f(0, 0);
-//             glVertex3f(-990, -580, 0);
-// 
-//             glTexCoord2f(0,1);
-//             glVertex3f(-990, 580, 0);
-// 
-//             glTexCoord2f(1, 1);
-//             glVertex3f(900, 580, 0);
-// 
-//             glTexCoord2f(1, 0);
-//             glVertex3f(900, -580, 0);
-//         glEnd();
-//         glBindTexture(GL_TEXTURE_2D, 0);
+        glNormal3f(0, 0, 1);
+        
+        glPushMatrix();
+            glTranslatef(0,0.1,0);
+            glRotatef(90,1,0,0);
+            glBegin(GL_LINE_LOOP);
+                        for(int i =0; i <= 360; i++){
+                            float deg_in_rad = i * deg_to_rad;
+                            glVertex3f(cos(deg_in_rad)*1,sin(deg_in_rad)*1,0);
+                        }
+            glEnd();
+        glPopMatrix();
+        
+        glBegin(GL_LINES);
+            glVertex3f(5,0.1,-2);
+            glVertex3f(3,0.1,-2);
+            
+            glVertex3f(3,0.1,2);
+            glVertex3f(5,0.1,2);
+            
+            glVertex3f(3,0.1,2);
+            glVertex3f(3,0.1,-2);
+        glEnd();
+        
+        
+        glBegin(GL_LINES);
+            glVertex3f(-5,0.1,-2);
+            glVertex3f(-3,0.1,-2);
+            
+            glVertex3f(-3,0.1,2);
+            glVertex3f(-5,0.1,2);
+            
+            glVertex3f(-3,0.1,2);
+            glVertex3f(-3,0.1,-2);
+        glEnd();
+    
+        glBegin(GL_LINES);
+            glVertex3f(0, 0.1, 5);
+            glVertex3f(0, 0.1, -5);
+        glEnd();
+        
         glScalef(10,0.1,10);
         glutSolidCube(1);
+    
     glPopMatrix();
 }
 
@@ -323,6 +432,7 @@ static void on_timer(int value){
         
     }
     
+    /*Kolizija sa plocicama*/
     if(x_curr <= -3.55 && z_curr >= first_z - 1 &&  z_curr <= first_z + 1){
         v_x *= -1;
     }
@@ -332,18 +442,13 @@ static void on_timer(int value){
     }
     
     
-    printf("%d %d\n", count_fsd, count_scd);
-    
+        
     z_curr += v_z*2;
     if(z_curr <= -(5 - size / 2) || z_curr >= (5 - size / 2)){
         v_z *= -1;
     }
     
     
-    
-    
-    /*fsd crveni*/
-        
     /*ponovno iscrtavanje prozora*/
     glutPostRedisplay();
     
@@ -385,7 +490,7 @@ static void init_image(void)
     /* Kreira se druga tekstura. */
     image_read(image, FILENAME1);
 
-    glBindTexture(GL_TEXTURE_2D, names[1]);
+    glBindTexture(GL_TEXTURE_2D, names[0]);
     glTexParameteri(GL_TEXTURE_2D,
                     GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D,
@@ -408,6 +513,17 @@ static void init_image(void)
     glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
 }
 
+
+/*funkcija za ispis*/
+static void displayText( float x, float y, int r, int g, int b, const char *string ) {
+    int j = strlen( string );
+ 
+    glColor3f( r, g, b );
+    glRasterPos3f( x, y ,0);
+    for( int i = 0; i < j; i++ ) {
+        glutBitmapCharacter( GLUT_BITMAP_TIMES_ROMAN_24, string[i] );
+    }
+}
 
 
 

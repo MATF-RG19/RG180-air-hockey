@@ -10,13 +10,10 @@
 #define EPSILON 0.01
 #define TIMER_ID 0
 #define TIMER_INTERVAL 25
-#define FILENAME1 "AirHockeySurface.bmp"
 
 
 const static float size = 0.2;
 
-static GLuint names[2];
-static float matrix[16];
 
 const float deg_to_rad = 3.14159/180;
 /*tekuce koordinate lopte*/
@@ -26,7 +23,6 @@ static float v_x, v_z;
 static float first_x = -4,first_z= 0;
 static float second_x = 4,second_z= 0;
 static int count_fsd = 0, count_scd = 0;
-static void init_image();
 static int animation_ongoing;
 static int animation_parametar = 0;
 /*fj-e*/
@@ -84,7 +80,6 @@ int main(int argc, char **argv){
     /*openGl inicjalizacija*/
     glClearColor(0,0,0,0);
     
-    init_image();
     
     /*poziv glavne petlje*/
     glutMainLoop();
@@ -458,60 +453,6 @@ static void on_timer(int value){
     
 }
 
-
-static void init_image(void)
-{
-    /* Objekat koji predstavlja teskturu ucitanu iz fajla. */
-    Image * image;
-
-    /* Postavlja se boja pozadine. */
-
-    /* Ukljucuje se testiranje z-koordinate piksela. */
-    glEnable(GL_DEPTH_TEST);
-
-    /* Ukljucuju se teksture. */
-    glEnable(GL_TEXTURE_2D);
-
-    glTexEnvf(GL_TEXTURE_ENV,
-              GL_TEXTURE_ENV_MODE,
-              GL_REPLACE);
-
-    /*
-     * Inicijalizuje se objekat koji ce sadrzati teksture ucitane iz
-     * fajla.
-     */
-    image = image_init(900, 580);
-
-
-    /* Generisu se identifikatori tekstura. */
-    glGenTextures(2, names);
-
-
-    /* Kreira se druga tekstura. */
-    image_read(image, FILENAME1);
-
-    glBindTexture(GL_TEXTURE_2D, names[0]);
-    glTexParameteri(GL_TEXTURE_2D,
-                    GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D,
-                    GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                 image->width, image->height, 0,
-                 GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
-
-    /* Iskljucujemo aktivnu teksturu */
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    /* Unistava se objekat za citanje tekstura iz fajla. */
-    image_done(image);
-
-    /* Inicijalizujemo matricu rotacije. */
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-}
 
 
 /*funkcija za ispis*/

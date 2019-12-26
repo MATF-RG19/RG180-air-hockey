@@ -68,8 +68,8 @@ int main(int argc, char **argv){
     z_curr = 0;
 
     /*inicjalizacija vektora*/
-    v_x = -size / 2 + size * 0.25;
-    v_z = -size / 2 + size * 0.25;
+    v_x = -0.03;
+    v_z = -0.023;
     
     animation_ongoing = 0;
     

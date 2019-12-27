@@ -9,7 +9,7 @@ prvi igrac:
 
 drugi igrac:
 	karakter o na gore,
-	karakter a na dole
+	karakter k na dole
 
 pokrenuti igricu: karakter g 
 
